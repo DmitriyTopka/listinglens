@@ -43,3 +43,27 @@ rounds: cool 3, stock 3; cool 5.1.0-dev | stock 5.0.0
 An earlier run on commit e6c3610 (GrabCut at 1024 px, 4 iterations) gave the same picture: agent mean
 570.4 vs 586.3 ms (1.028x), box blur 2.91x, Otsu 1.92x, CLAHE 1.40x, adaptiveThreshold 0.77x; decision hash
 `b7212930db064904` identical across builds.
+
+## Per-stage profile (run 2, 11 Oct 2026, instance i-0092216293b482da2, code commit ea1c379 + ast-minified)
+
+Same setup (c8g.large, COOL 3.1 vs stock 5.0.0.93, 3 + 3 alternating rounds, 260 photos each). Seconds spent
+per stage over the 260-photo batch (median over rounds). Decision hash `547e5491eb6ccf36`, identical in all six runs.
+
+| stage | COOL s | stock s | speedup |
+|---|---:|---:|---:|
+| perceive (all measurements, also re-run after every action) | 30.12 | 29.97 | 0.99x |
+| tool: denoise (fastNlMeansDenoisingColored) | 20.29 | 22.27 | 1.10x |
+| tool: whiten_background (GrabCut) | 17.07 | 17.21 | 1.01x |
+| tool: exposure | 2.55 | 2.60 | 1.02x |
+| tool: recrop | 1.17 | 1.16 | 0.99x |
+| tool: white_balance / sharpen | 0.39 | 0.38 | 0.97x |
+| **whole agent, mean ms per photo** | **299.4** | **307.0** | **1.025x** |
+| whole agent, throughput img/s | 3.339 | 3.257 | 1.025x |
+
+Micro-benchmarks repeated within 1 %: box blur 2.87x, Otsu 1.92x, CLAHE 1.40x, grabCut 1.06x, NLM 1.02x.
+
+**Why perception does not speed up.** A cProfile of `perceive()` on 40 photos (Mac, 2 threads) shows that
+about 80 % of its time is NumPy and Python (LAB distance with `np.linalg.norm`, percentiles, dtype
+conversions, boolean masks) and only about 17 % is OpenCV calls (cvtColor, resize, morphology, blur, Sobel,
+Canny). COOL accelerates OpenCV, so it cannot touch most of this stage. Moving those NumPy steps into
+OpenCV primitives is the change that would let COOL's 2-3x kernels show up end to end.

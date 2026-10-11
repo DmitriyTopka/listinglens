@@ -171,13 +171,20 @@ photos x 13 defect variants = 260 images.
 Decision hash `f6c1d93bb5b62db5` is identical in all six runs: COOL changes speed, not answers. An earlier
 run on a previous commit (GrabCut at 1024 px) showed the same pattern (1.028x end to end).
 
+**Where the time goes (second run with a per-stage profile, same instance type, 3 + 3 rounds;
+details in [bench/RESULTS.md](../bench/RESULTS.md)).** Perception takes about 40 % of the agent's time and
+does not speed up at all with COOL (30.1 s vs 30.0 s per 260 photos): a profiler shows about 80 % of it is
+NumPy and Python glue (LAB distance, percentiles, masks), not OpenCV calls. Denoising gains 1.10x, GrabCut
+1.01x. The whole agent: 1.025x in this run, 1.034x in the first; decisions identical in all twelve runs.
+
 **Reading the numbers honestly.** COOL gives 1.4-2.9x on the box filter, Otsu threshold and CLAHE that the
 perception stage uses, but ListingLens spends most of its time in GrabCut and non-local-means denoising,
 where COOL is 2-6 % faster, so the end-to-end gain is 3.4 % on the mean and 8.4 % on the p95 tail (the
 GrabCut-heavy photos). With the COOL software fee ($0.01/h on top of $0.0798/h for c8g.large) the cost per
 1000 photos on one c8g.large is $0.0086 with COOL vs $0.0079 with the stock wheel at these speeds. COOL would pay off for workloads dominated by the operations it accelerates
 (thresholding, box filtering, CLAHE), which is what a perception-only pre-filter in front of the agent
-looks like. One regression (adaptiveThreshold 0.77x) is worth reporting upstream.
+looks like, and for a perception stage rewritten so that its arithmetic runs inside OpenCV instead of
+NumPy. One regression (adaptiveThreshold 0.77x) is worth reporting upstream.
 
 ## 6. Evaluation
 
