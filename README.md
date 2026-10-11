@@ -1,8 +1,13 @@
-# ListingLens
+# ListingLens: a quality gate for product photos with verifiable autonomy
 
-An OpenCV 5 agent that checks product photos for online-store listings. It measures each photo,
-fixes what it can fix safely, re-measures to verify its own fix, and otherwise asks for a reshoot
-(with a concrete tip) or hands the photo to a person.
+ListingLens checks every product photo before it goes live. An OpenCV 5 agent measures the photo,
+fixes only what it can fix safely, **measures again to prove the fix worked, and rolls it back if it
+did not**. Whatever it cannot verify goes back to the seller as a concrete reshoot tip or to a person.
+
+**In numbers:** on 1,768 held-out photos the agent makes the right call 89.7 % of the time; the same
+pipeline without the re-measure step gets 85.2 % and one in four of its "fixed" photos still fails the
+checks. On 106 hand-labelled real catalog photos it stops 27 of 33 problem photos (an open-loop
+pipeline stops 11). Runs in about a second per photo on AWS Lambda (Graviton) inside the free tier.
 
 - Live endpoint (AWS Lambda arm64 / Graviton): https://je7md23hxr42uzjol5luyteg2q0axshn.lambda-url.us-east-1.on.aws/
   (no photos at hand? click one of the six sample photos on the page)

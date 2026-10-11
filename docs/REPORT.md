@@ -1,7 +1,19 @@
-# ListingLens: an OpenCV 5 agent that checks, fixes and escalates product photos
+# ListingLens: a quality gate for product photos with verifiable autonomy
 
 Technical report for the OpenCV AI Competition 2026 (powered by AWS).
 Paths: overall + **Agentic Vision** + **Best Use of COOL**.
+
+**Summary.** ListingLens is an OpenCV 5 agent that sits between a seller's camera and a store listing.
+It is allowed to act on its own only where it can check its own work: after every action it measures the
+photo again and keeps the change only if the measurement proves it helped. Everything else goes to the
+seller (reshoot, with a concrete reason) or to a person (approve / reject). The design choice is bounded
+autonomy over clever generation: no generative editing, every decision traceable to an OpenCV number.
+Key results: 89.7 % correct decisions on 1,768 held-out photos vs 85.2 % for the same pipeline without
+verification (whose "fixes" fail the checks 25 % of the time); 27 of 33 problem photos stopped on 106
+hand-labelled real catalog photos; COOL on Graviton4 speeds up the operations it targets by up to 2.9x.
+For a shop with 500 SKUs and 4 photos each, that is 2,000 photos screened in about 35 minutes of Lambda
+time at $0; a person reviews only the flagged ones, which on our labelled sample of real catalog
+photos was about half of them. Cutting that review load is the main open problem.
 
 ## 1. Problem and users
 
@@ -205,7 +217,41 @@ Agent behaviour on dev: in 337 of 1508 photos at least one action was reverted b
 measurement showed it did not help; the next step then changed (most often `sharpen -> reshoot`,
 `whiten_background -> human`, `exposure -> whiten_background -> accept`).
 
-### 6.3 Real photos and failures
+### 6.3 Ablation: what the verify loop buys (held-out test, 1768 photos)
+
+| pipeline | correct (lenient) | correct (strict, pre-registered sets) | "fixed" photos that still fail the checks |
+|---|---:|---:|---:|
+| **ListingLens agent** (perceive, decide, act, verify, revert) | **89.7 %** | **87.6 %** | 0 of 695 (by construction) |
+| open loop (same rules and tools, apply first remedy once, no re-measure) | 85.2 % | 84.5 % | **255 of 1032 (25 %)** |
+| rules only (thresholds, no actions) | 85.2 % | 84.5 % | n/a |
+
+On the 368 test photos where the agent reverted at least one of its own actions, it reached the right
+decision 94.8 % of the time; the open-loop pipeline got 73.6 % of the same photos right. The strict column
+uses the single-answer sets written down before any result was seen (section 6.1). Script:
+`eval/ablation.py`, output `eval/results/ablation_test.json`.
+
+### 6.4 Hand-labelled real catalog photos (106)
+The 106 real Amazon catalog photos that failed our strict "already clean" filter were labelled by us
+against main-image rules (white background, whole product in frame, no text or badges on the image,
+not a room scene): 73 acceptable, 33 with a problem. Labels and decisions per photo:
+`eval/results/real106_labels.csv`.
+
+| | agent | open loop |
+|---|---:|---:|
+| problems stopped (not accepted / not auto-passed) | **27 / 33 (82 %)** | 11 / 33 (33 %) |
+| "accept" that was right | 18 / 23 (78 %) | 18 / 23 (78 %) |
+| good photos passed automatically | 30 / 73 (41 %) | 44 / 73 (60 %) |
+| good photos sent to reshoot (false alarm) | 12 / 73 (16 %) | 12 / 73 (16 %) |
+| good photos sent to a person | 31 / 73 (42 %) | 17 / 73 (23 %) |
+
+Read as a **quality gate**, ListingLens stops most bad photos before they are published, and pays for it
+with review load: four in ten good catalog photos still go to a person, mostly tight crops that touch the
+frame and multi-item composites that read as a cluttered background. The five problems it let through
+are text badges and overlays (it has no text detector) and two products cut by the frame edge. These are
+professional catalog photos, not the phone photos small sellers take; testing on seller phone photos is
+the next step.
+
+### 6.5 Real photos and failures
 - **Lifestyle / in-use photos (40, real):** before the scene guard, 10 of 40 were "auto-fixed" by cutting
   people, rooms and tyres out of their context. After adding the scene check (foreground running along the
   frame), 1 of 40 is auto-fixed (an instruction diagram), 37 go to a person with an explanation, 2 to
@@ -223,7 +269,7 @@ measurement showed it did not help; the next step then changed (most often `shar
   (dev accuracy moved from 91.1 % to 90.4 %). The remaining reshoots are mostly tight crops that touch the
   frame, which some marketplaces accept: the threshold is a policy choice.
 
-### 6.4 Latency
+### 6.6 Latency
 Mean 0.82 s per image on an Apple M2 Pro, 0.34 s on one Graviton4 c8g.large with COOL (0.36 s stock), median 0.17 s; the
 slow tail is GrabCut and denoising. On Lambda arm64 the round trip is 1.0-1.6 s for typical photos.
 
