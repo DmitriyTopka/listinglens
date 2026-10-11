@@ -20,6 +20,8 @@ files = sorted(glob.glob("listinglens/*.py")) + ["eval/make_dataset.py", "bench/
 parts = []
 for f in files:
     body = open(f).read()
+    if f.endswith(".py"):  # drop comment-only and blank lines to stay under the 16 KB user-data limit
+        body = "\n".join(l for l in body.splitlines() if l.strip() and not l.strip().startswith("#")) + "\n"
     if not body.endswith("\n"):
         body += "\n"
     parts.append(f"mkdir -p $(dirname {f}) && cat > {f} <<'LLEOF'\n{body}LLEOF\n")

@@ -1,0 +1,147 @@
+{
+ "decision": "auto_fixed",
+ "message": "all checks pass",
+ "initial_metrics": {
+  "width": 1200,
+  "height": 1200,
+  "occupancy": 0.8496,
+  "center_offset": 0.0007,
+  "touches_edge": false,
+  "edge_contact": 0.0,
+  "mask_confidence": 1.0,
+  "n_parts": 6,
+  "bg_lightness": 163.0,
+  "bg_uniformity": 0.0,
+  "bg_edge_density": 0.0,
+  "bg_cast": 0.0,
+  "obj_lightness": 217.2748,
+  "obj_clipped_high": 0.0003,
+  "obj_clipped_low": 0.0,
+  "black_point": 163.0,
+  "lap_var": 35.5221,
+  "blur_index": 0.5049,
+  "noise_sigma": 0.087,
+  "phash": "1100000000111111011001111100100000011011111100101010010010101001"
+ },
+ "initial_issues": [
+  {
+   "code": "soft_focus",
+   "severity": "fixable",
+   "evidence": "blur index 0.50, Laplacian var 35.5"
+  },
+  {
+   "code": "background_not_white",
+   "severity": "fixable",
+   "evidence": "background L 163 < 244"
+  }
+ ],
+ "final_metrics": {
+  "width": 1200,
+  "height": 1200,
+  "occupancy": 0.8496,
+  "center_offset": 0.0012,
+  "touches_edge": false,
+  "edge_contact": 0.0,
+  "mask_confidence": 1.0,
+  "n_parts": 6,
+  "bg_lightness": 255.0,
+  "bg_uniformity": 0.0,
+  "bg_edge_density": 0.0,
+  "bg_cast": 0.0,
+  "obj_lightness": 214.6112,
+  "obj_clipped_high": 0.0004,
+  "obj_clipped_low": 0.0,
+  "black_point": 171.0,
+  "lap_var": 33.3553,
+  "blur_index": 0.4534,
+  "noise_sigma": 0.0852,
+  "phash": "1011111101100001110010001001111110110000111001100000011001001100"
+ },
+ "steps": [
+  {
+   "n": 1,
+   "action": "exposure",
+   "reason": "addresses background_not_white",
+   "planner": "rules",
+   "issues_before": [
+    "soft_focus",
+    "background_not_white"
+   ],
+   "issues_after": [
+    "unclear_product",
+    "blown_highlights"
+   ],
+   "outcome": "reverted: introduced blown_highlights,unclear_product",
+   "metrics_after": {
+    "width": 1200,
+    "height": 1200,
+    "occupancy": 0.0,
+    "center_offset": 0.0,
+    "touches_edge": false,
+    "edge_contact": 0.0,
+    "mask_confidence": 0.0,
+    "n_parts": 0,
+    "bg_lightness": 255.0,
+    "bg_uniformity": 0.0,
+    "bg_edge_density": 0.0,
+    "bg_cast": 0.0,
+    "obj_lightness": 253.3241,
+    "obj_clipped_high": 0.9845,
+    "obj_clipped_low": 0.0034,
+    "black_point": 254.0,
+    "lap_var": 162.5739,
+    "blur_index": 0.1879,
+    "noise_sigma": 0.2209,
+    "phash": "1011111101100001110010000001111110110000111001100000111001101000"
+   },
+   "ms": 152.09595899796113
+  },
+  {
+   "n": 2,
+   "action": "whiten_background",
+   "reason": "addresses background_not_white",
+   "planner": "rules",
+   "issues_before": [
+    "soft_focus",
+    "background_not_white"
+   ],
+   "issues_after": [],
+   "outcome": "kept (fixed background_not_white; dE 0.1)",
+   "metrics_after": {
+    "width": 1200,
+    "height": 1200,
+    "occupancy": 0.8496,
+    "center_offset": 0.0012,
+    "touches_edge": false,
+    "edge_contact": 0.0,
+    "mask_confidence": 1.0,
+    "n_parts": 6,
+    "bg_lightness": 255.0,
+    "bg_uniformity": 0.0,
+    "bg_edge_density": 0.0,
+    "bg_cast": 0.0,
+    "obj_lightness": 214.6112,
+    "obj_clipped_high": 0.0004,
+    "obj_clipped_low": 0.0,
+    "black_point": 171.0,
+    "lap_var": 33.3553,
+    "blur_index": 0.4534,
+    "noise_sigma": 0.0852,
+    "phash": "1011111101100001110010001001111110110000111001100000011001001100"
+   },
+   "ms": 472.03037499275524
+  },
+  {
+   "n": 3,
+   "action": "accept",
+   "reason": "all checks pass",
+   "planner": "rules",
+   "issues_before": [],
+   "issues_after": [],
+   "outcome": "final",
+   "metrics_after": {},
+   "ms": 0.0
+  }
+ ],
+ "ms_total": 905.1
+}

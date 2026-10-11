@@ -36,5 +36,6 @@ for r in 1 2 3; do
   done
 done
 say "LLSTAGE done"
-sleep 30
+# keep the console readable for 15 minutes so the results can be collected, then terminate
+sleep 900
 shutdown -h now
