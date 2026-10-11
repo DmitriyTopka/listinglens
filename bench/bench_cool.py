@@ -15,6 +15,7 @@ Three parts:
 from __future__ import annotations
 
 import argparse
+import collections
 import glob
 import hashlib
 import json
@@ -115,6 +116,22 @@ def main():
     if not a.skip_micro:
         out["micro_ms"] = micro(cv2.resize(cv2.imread(files[0]), (1600, 1600)))
 
+    # per-stage profile: wrap perception and every tool so their wall time is accumulated
+    import listinglens.agent as ag
+    stage = collections.Counter()
+
+    def timed(name, fn):
+        def w(*a, **k):
+            t = time.perf_counter()
+            try:
+                return fn(*a, **k)
+            finally:
+                stage[name] += time.perf_counter() - t
+        return w
+    ag.perceive = timed("perceive", ag.perceive)
+    for name in list(ag.TOOLS):
+        ag.TOOLS[name] = timed("tool:" + name, ag.TOOLS[name])
+
     lat, decisions = [], []
     t0 = time.perf_counter()
     for name, v, im in work:
@@ -130,6 +147,7 @@ def main():
         "p95_ms": round(lat[int(len(lat) * 0.95) - 1], 1),
         "mean_ms": round(sum(lat) / len(lat), 1),
         "throughput_img_per_s": round(len(work) / wall, 3),
+        "stage_s": {k: round(v, 2) for k, v in sorted(stage.items())},
         "decision_hash": hashlib.sha256("\n".join(decisions).encode()).hexdigest()[:16],
         "decisions": {d: sum(1 for x in decisions if x.split(":")[2] == d)
                       for d in ("accept", "auto_fixed", "reshoot", "human")},
