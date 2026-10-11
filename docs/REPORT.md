@@ -8,7 +8,7 @@ It is allowed to act on its own only where it can check its own work: after ever
 photo again and keeps the change only if the measurement proves it helped. Everything else goes to the
 seller (reshoot, with a concrete reason) or to a person (approve / reject). The design choice is bounded
 autonomy over clever generation: no generative editing, every decision traceable to an OpenCV number.
-Key results: 89.7 % correct decisions on 1,768 held-out photos vs 85.2 % for the same pipeline without
+Key results: 89.6 % correct decisions on 1,768 held-out photos vs 85.2 % for the same pipeline without
 verification (whose "fixes" fail the checks 25 % of the time); 27 of 33 problem photos stopped on 106
 hand-labelled real catalog photos; COOL on Graviton4 speeds up the operations it targets by up to 2.9x.
 For a shop with 500 SKUs and 4 photos each, that is 2,000 photos screened in about 35 minutes of Lambda
@@ -202,16 +202,17 @@ because it raises the dev score.
 | split | images | correct | accuracy |
 |---|---:|---:|---:|
 | dev | 1508 | 1363 | 90.4 % |
-| **test (held out, run once)** | 1768 | 1585 | **89.7 %** |
+| **test (held out, run once)** | 1768 | 1584 | **89.6 %** |
 
 Per variant on dev: strong blur, low resolution, cluttered background 100 %; colour cast and dark 98 %;
 clean 96 %; motion blur 95 %; small/off-centre 92 %; cut-off 90 %; noisy 89 %; grey background 88 %;
 soft focus 84 %; **overexposed 45 %**.
 
 Per variant on test: strong blur, low resolution, dark, cluttered background 100 %; colour cast 97 %;
-clean 97 %; small/off-centre 97 %; grey background 94 %; cut-off 93 %; noisy 88 %; motion blur 85 %;
-soft focus 81 %; **overexposed 33 %**. The test split was run once, on the final code
-(after all dev tuning), and nothing was changed afterwards because of it.
+clean 97 %; small/off-centre 97 %; grey background 93 %; cut-off 93 %; noisy 88 %; motion blur 85 %;
+soft focus 81 %; **overexposed 33 %**. The test split was first run after all dev tuning; nothing was tuned on it. It was re-run once after
+seeding GrabCut's random initialisation for repeatable decisions (1 of 1768 decisions changed; two
+consecutive runs are now identical).
 
 Agent behaviour on dev: in 337 of 1508 photos at least one action was reverted because the follow-up
 measurement showed it did not help; the next step then changed (most often `sharpen -> reshoot`,
@@ -221,12 +222,12 @@ measurement showed it did not help; the next step then changed (most often `shar
 
 | pipeline | correct (lenient) | correct (strict, pre-registered sets) | "fixed" photos that still fail the checks |
 |---|---:|---:|---:|
-| **ListingLens agent** (perceive, decide, act, verify, revert) | **89.7 %** | **87.6 %** | 0 of 695 (by construction) |
+| **ListingLens agent** (perceive, decide, act, verify, revert) | **89.6 %** | **87.5 %** | 0 of 691 (by construction) |
 | open loop (same rules and tools, apply first remedy once, no re-measure) | 85.2 % | 84.5 % | **255 of 1032 (25 %)** |
 | rules only (thresholds, no actions) | 85.2 % | 84.5 % | n/a |
 
-On the 368 test photos where the agent reverted at least one of its own actions, it reached the right
-decision 94.8 % of the time; the open-loop pipeline got 73.6 % of the same photos right. The strict column
+On the 371 test photos where the agent reverted at least one of its own actions, it reached the right
+decision 94.6 % of the time; the open-loop pipeline got 73.9 % of the same photos right. The strict column
 uses the single-answer sets written down before any result was seen (section 6.1). Script:
 `eval/ablation.py`, output `eval/results/ablation_test.json`.
 

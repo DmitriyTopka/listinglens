@@ -102,6 +102,7 @@ def whiten_background(img: np.ndarray, iters: int = 3) -> tuple[np.ndarray, floa
     gc[core > 0] = cv2.GC_FGD
     gc[border_strip(*work.shape[:2], 0.02) > 0] = cv2.GC_BGD
     bgd, fgd = np.zeros((1, 65), np.float64), np.zeros((1, 65), np.float64)
+    cv2.setRNGSeed(20261026)  # GrabCut's GMM init draws from OpenCV's global RNG: fix it for repeatable decisions
     cv2.grabCut(work, gc, None, bgd, fgd, iters, cv2.GC_INIT_WITH_MASK)
     fg = np.where((gc == cv2.GC_FGD) | (gc == cv2.GC_PR_FGD), 255, 0).astype(np.uint8)
     # Scene check: the border strip is forced to background, so look just inside it. If the foreground
