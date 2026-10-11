@@ -3,3 +3,4 @@ __pycache__/
 build/
 eval/results/
 *.zip
+app/source.zip

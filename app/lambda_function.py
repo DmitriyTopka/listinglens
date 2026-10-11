@@ -101,6 +101,11 @@ def handler(event, context=None):
         r["isBase64Encoded"] = True
         r["headers"]["Cache-Control"] = "public, max-age=86400"
         return r
+    if method == "GET" and path == "/source.zip" and os.path.isfile(os.path.join(HERE, "source.zip")):
+        r = _resp(200, base64.b64encode(open(os.path.join(HERE, "source.zip"), "rb").read()).decode(), "application/zip")
+        r["isBase64Encoded"] = True
+        r["headers"]["Content-Disposition"] = 'attachment; filename="listinglens_source.zip"'
+        return r
     if method == "GET" and path == "/health":
         return _resp(200, {"ok": True, "opencv": cv2.__version__, "arch": os.uname().machine})
     if method != "POST" or path != "/api/check":
