@@ -87,7 +87,8 @@ KARN="arn:aws:lambda:$REGION:$ACCOUNT:function:listinglens-killswitch"
 aws lambda add-permission --function-name listinglens-killswitch --statement-id sns-invoke \
   --action lambda:InvokeFunction --principal sns.amazonaws.com --source-arn "$TOPIC" >/dev/null 2>&1 || true
 aws sns subscribe --topic-arn "$TOPIC" --protocol lambda --notification-endpoint "$KARN" >/dev/null
-if [ -n "$ALERT_EMAIL" ]; then
+if [ -n "$ALERT_EMAIL" ] && ! aws sns list-subscriptions-by-topic --topic-arn "$TOPIC" \
+    --query "Subscriptions[?Endpoint=='$ALERT_EMAIL']" --output text | grep -q .; then
   aws sns subscribe --topic-arn "$TOPIC" --protocol email --notification-endpoint "$ALERT_EMAIL" >/dev/null
 fi
 aws cloudwatch put-metric-alarm --alarm-name listinglens-hourly-cap \
