@@ -24,7 +24,7 @@ T = {
     "obj_dark": 70.0,
     "bg_dark": 200.0,         # a dark product on a white background is not underexposure
     "clip_high": 0.30,
-    "noise": 1.2,
+    "noise": 2.0,
     "mask_conf": 0.45,
 }
 
@@ -67,7 +67,8 @@ def find_issues(r: Report) -> list[Issue]:
     if r.obj_lightness < T["obj_dark"] and r.bg_lightness < T["bg_dark"]:
         out.append(Issue("underexposed", "fixable", f"product L {r.obj_lightness:.0f} < {T['obj_dark']:.0f}"))
     if r.obj_clipped_high > T["clip_high"]:
-        out.append(Issue("blown_highlights", "reshoot", f"{r.obj_clipped_high:.0%} of product pixels clipped"))
+        # a white product on a white background clips too, so a person decides rather than forcing a reshoot
+        out.append(Issue("blown_highlights", "human", f"{r.obj_clipped_high:.0%} of product pixels clipped"))
     if r.noise_sigma > T["noise"]:
         out.append(Issue("noisy", "fixable", f"noise sigma {r.noise_sigma:.2f} > {T['noise']}"))
     return out

@@ -129,11 +129,16 @@ def blur_index(gray: np.ndarray) -> float:
 
 
 def noise_sigma(gray: np.ndarray) -> float:
-    """Immerkaer 1996 fast noise variance estimation."""
+    """Immerkaer 1996 fast noise estimate, computed on flat regions only (Sobel magnitude below the
+    image's 60th percentile), so fabric weave or printed packaging is not mistaken for sensor noise."""
     k = np.array([[1, -2, 1], [-2, 4, -2], [1, -2, 1]], np.float32)
-    h, w = gray.shape
-    conv = cv2.filter2D(gray.astype(np.float32), -1, k)
-    return float(np.sqrt(np.pi / 2) * np.abs(conv[1:-1, 1:-1]).sum() / (6 * (w - 2) * (h - 2)))
+    g = gray.astype(np.float32)
+    conv = np.abs(cv2.filter2D(g, -1, k))[1:-1, 1:-1]
+    mag = cv2.magnitude(cv2.Sobel(g, cv2.CV_32F, 1, 0, ksize=3), cv2.Sobel(g, cv2.CV_32F, 0, 1, ksize=3))[1:-1, 1:-1]
+    flat = mag <= np.percentile(mag, 60)
+    if flat.sum() < 1000:
+        flat = np.ones_like(flat)
+    return float(np.sqrt(np.pi / 2) * conv[flat].mean() / 6)
 
 
 def phash(img: np.ndarray) -> str:
