@@ -190,11 +190,16 @@ because it raises the dev score.
 | split | images | correct | accuracy |
 |---|---:|---:|---:|
 | dev | 1508 | 1363 | 90.4 % |
-| test (held out) | 1768 | TBD | TBD |
+| **test (held out, run once)** | 1768 | 1585 | **89.7 %** |
 
 Per variant on dev: strong blur, low resolution, cluttered background 100 %; colour cast and dark 98 %;
 clean 96 %; motion blur 95 %; small/off-centre 92 %; cut-off 90 %; noisy 89 %; grey background 88 %;
 soft focus 84 %; **overexposed 45 %**.
+
+Per variant on test: strong blur, low resolution, dark, cluttered background 100 %; colour cast 97 %;
+clean 97 %; small/off-centre 97 %; grey background 94 %; cut-off 93 %; noisy 88 %; motion blur 85 %;
+soft focus 81 %; **overexposed 33 %**. The test split was run once, on the final code
+(after all dev tuning), and nothing was changed afterwards because of it.
 
 Agent behaviour on dev: in 337 of 1508 photos at least one action was reverted because the follow-up
 measurement showed it did not help; the next step then changed (most often `sharpen -> reshoot`,
@@ -229,6 +234,10 @@ slow tail is GrabCut and denoising. On Lambda arm64 the round trip is 1.0-1.6 s 
 - Background replacement uses GrabCut and refuses scenes; it is not suitable for transparent or very
   thin products (glass, cables), which mostly go to a human.
 - Focus metrics are affected by background contrast (see the example trace).
+- White balance is estimated from the background. When a strong cast pushes a white background into
+  clipping, the background under-reports the cast: on 40 dev colour-cast photos the product's residual
+  chroma error is 6.9 (CIE a*b*, mean) after correction, roughly half of the injected cast. We tried
+  von Kries RGB gains and a hybrid; both were worse (8.3).
 - The LLM planner is implemented and unit-tested but not evaluated at scale, because Bedrock usage is not
   free and the serving budget was zero.
 

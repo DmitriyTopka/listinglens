@@ -5,6 +5,8 @@ fixes what it can fix safely, re-measures to verify its own fix, and otherwise a
 (with a concrete tip) or hands the photo to a person.
 
 - Live endpoint (AWS Lambda arm64 / Graviton): https://je7md23hxr42uzjol5luyteg2q0axshn.lambda-url.us-east-1.on.aws/
+  (no photos at hand? click one of the six sample photos on the page)
+- Results: 89.7 % correct decisions on 1768 held-out test photos; COOL on Graviton4 in [bench/RESULTS.md](bench/RESULTS.md)
 - Architecture: [docs/architecture.svg](docs/architecture.svg)
 - Technical report: [docs/REPORT.md](docs/REPORT.md)
 
