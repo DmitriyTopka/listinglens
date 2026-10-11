@@ -13,6 +13,7 @@ TARGET_OCCUPANCY = 0.85
 OUT_SIDE = 1600
 MIN_SIDE = 1000
 MAX_UPSCALE = 2.0
+GRABCUT_SIDE = 640
 
 
 def _full_res_mask(img: np.ndarray):
@@ -83,11 +84,14 @@ def exposure(img: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
 
 
-def whiten_background(img: np.ndarray, iters: int = 4) -> tuple[np.ndarray, float]:
+def whiten_background(img: np.ndarray, iters: int = 3) -> tuple[np.ndarray, float]:
     """GrabCut refinement seeded by our mask, then composite onto pure white with a feathered edge.
     Returns (image, agreement) where agreement = IoU between seed mask and GrabCut mask; low IoU means
     the separation is uncertain and a human should look."""
     work = to_work(img)
+    s = GRABCUT_SIDE / max(work.shape[:2])
+    if s < 1:  # GrabCut cost grows with pixel count; 640 px keeps the edge quality and is ~3x faster
+        work = cv2.resize(work, None, fx=s, fy=s, interpolation=cv2.INTER_AREA)
     om = segment_object(work)
     if om.n_parts == 0:
         return img.copy(), 0.0
