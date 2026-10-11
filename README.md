@@ -60,7 +60,7 @@ python app/local_server.py               # http://localhost:8765
 ## Reproduce the evaluation
 
 ```bash
-# 1. download the 358 Amazon Berkeley Objects images listed in ../data/abo/sample.csv (public S3, CC BY 4.0)
+python eval/download_abo.py                  # 358 Amazon Berkeley Objects photos (public S3, CC BY 4.0), ~106 MB
 # 2. build the labelled set (3276 images) and run the agent on it
 python eval/make_dataset.py
 python eval/run_eval.py --split dev          # thresholds were tuned on dev only
