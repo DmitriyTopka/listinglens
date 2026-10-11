@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" font-family="Helvetica, Arial, sans-serif" font-size="14">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker>
+    <style>
+      .box{fill:#fff;stroke:#333;stroke-width:1.5;rx:10}
+      .aws{fill:#fff7ec;stroke:#e48f1a;stroke-width:1.5}
+      .agent{fill:#eef4ff;stroke:#1f5fbf;stroke-width:1.5}
+      .cool{fill:#eefaf0;stroke:#1e7d3a;stroke-width:1.5}
+      .t{font-weight:700}
+      .s{font-size:12px;fill:#444}
+      .l{stroke:#333;stroke-width:1.5;fill:none;marker-end:url(#a)}
+      .d{stroke:#b3261e;stroke-width:1.5;fill:none;stroke-dasharray:5 4;marker-end:url(#a)}
+    </style>
+  </defs>
+  <rect width="1200" height="760" fill="#fafafa"/>
+  <text x="24" y="34" font-size="22" class="t">ListingLens: architecture</text>
+  <text x="24" y="56" class="s">OpenCV 5 perception drives every agent decision; serving runs on AWS Graviton (Lambda arm64), COOL is measured on Graviton4 (EC2 c8g)</text>
+
+  <!-- user -->
+  <rect x="24" y="96" width="200" height="120" rx="10" class="box"/>
+  <text x="40" y="122" class="t">Seller / reviewer</text>
+  <text x="40" y="144" class="s">Browser page (index.html)</text>
+  <text x="40" y="162" class="s">resizes photos to 2000 px</text>
+  <text x="40" y="180" class="s">approve / reject buttons</text>
+  <text x="40" y="198" class="s">exports decisions JSON</text>
+
+  <!-- AWS boundary -->
+  <rect x="260" y="80" width="916" height="420" rx="14" class="aws"/>
+  <text x="276" y="104" class="t">AWS us-east-1 (always-free tier)</text>
+
+  <rect x="280" y="120" width="170" height="70" rx="10" class="box"/>
+  <text x="292" y="146" class="t">Lambda Function URL</text>
+  <text x="292" y="166" class="s">HTTPS, POST /api/check</text>
+  <text x="292" y="182" class="s">GET / (page), /health</text>
+  <path d="M224,150 L278,150" class="l"/>
+  <path d="M278,176 L224,176" class="l"/>
+
+  <!-- Lambda + agent -->
+  <rect x="480" y="116" width="680" height="250" rx="12" class="agent"/>
+  <text x="496" y="140" class="t">Lambda "listinglens"  arm64 (Graviton) · Python 3.12 · 2048 MB</text>
+  <text x="496" y="158" class="s">layers: opencv-python-headless 5.0.0 · numpy 2.2.6   |   images processed in memory, never stored</text>
+
+  <rect x="500" y="176" width="140" height="78" rx="8" class="box"/>
+  <text x="512" y="198" class="t">1 Perceive</text>
+  <text x="512" y="216" class="s">OpenCV 5: LAB mask,</text>
+  <text x="512" y="231" class="s">blur, exposure, noise,</text>
+  <text x="512" y="246" class="s">framing, pHash</text>
+
+  <rect x="664" y="176" width="140" height="78" rx="8" class="box"/>
+  <text x="676" y="198" class="t">2 Decide</text>
+  <text x="676" y="216" class="s">issues -> legal actions</text>
+  <text x="676" y="231" class="s">rule planner (default)</text>
+  <text x="676" y="246" class="s">Bedrock Nova (optional)</text>
+
+  <rect x="828" y="176" width="140" height="78" rx="8" class="box"/>
+  <text x="840" y="198" class="t">3 Act</text>
+  <text x="840" y="216" class="s">recrop, white balance,</text>
+  <text x="840" y="231" class="s">exposure, GrabCut bg,</text>
+  <text x="840" y="246" class="s">NLM denoise, sharpen</text>
+
+  <rect x="992" y="176" width="150" height="78" rx="8" class="box"/>
+  <text x="1004" y="198" class="t">4 Verify</text>
+  <text x="1004" y="216" class="s">re-perceive, keep or</text>
+  <text x="1004" y="231" class="s">revert; colour-fidelity</text>
+  <text x="1004" y="246" class="s">guard; step budget 6</text>
+
+  <path d="M640,215 L662,215" class="l"/>
+  <path d="M804,215 L826,215" class="l"/>
+  <path d="M968,215 L990,215" class="l"/>
+  <path d="M1066,256 L1066,290 L734,290 L734,258" class="l"/>
+  <text x="760" y="284" class="s">result changes the next action (retry other tool / escalate)</text>
+
+  <rect x="500" y="306" width="640" height="46" rx="8" class="box"/>
+  <text x="514" y="334" class="t">Outcome:</text>
+  <text x="590" y="334" class="s">accept · auto_fixed (+ image) · reshoot (+ concrete tip) · human review  · JSON trace</text>
+  <path d="M498,330 L470,330 L470,184 L452,184" class="l"/>
+
+  <!-- observability -->
+  <rect x="280" y="390" width="210" height="92" rx="10" class="box"/>
+  <text x="292" y="414" class="t">CloudWatch Logs</text>
+  <text x="292" y="434" class="s">1 JSON line per request:</text>
+  <text x="292" y="450" class="s">decision, issues, steps, ms</text>
+  <text x="292" y="466" class="s">retention 14 days, no pixels</text>
+  <path d="M600,366 L420,388" class="l"/>
+
+  <rect x="520" y="390" width="210" height="92" rx="10" class="box"/>
+  <text x="532" y="414" class="t">Alarm: &gt;300 calls / hour</text>
+  <text x="532" y="434" class="s">CloudWatch -> SNS topic</text>
+  <text x="532" y="450" class="s">-> killswitch Lambda sets</text>
+  <text x="532" y="466" class="s">concurrency 0 + email</text>
+  <path d="M492,436 L518,436" class="l"/>
+  <path d="M730,436 L760,436 L760,372" class="d"/>
+
+  <rect x="790" y="390" width="180" height="92" rx="10" class="box"/>
+  <text x="802" y="414" class="t">AWS Budgets</text>
+  <text x="802" y="434" class="s">$1 / month alert</text>
+  <text x="802" y="450" class="s">actual + forecast</text>
+  <text x="802" y="466" class="s">-> owner email</text>
+
+  <rect x="996" y="390" width="160" height="92" rx="10" class="box"/>
+  <text x="1008" y="414" class="t">CloudShell</text>
+  <text x="1008" y="434" class="s">build + deploy scripts</text>
+  <text x="1008" y="450" class="s">no long-lived keys</text>
+  <text x="1008" y="466" class="s">deploy/*.sh</text>
+
+  <!-- COOL benchmark -->
+  <rect x="260" y="530" width="560" height="200" rx="14" class="cool"/>
+  <text x="276" y="556" class="t">COOL benchmark (EC2, on demand, self-terminating)</text>
+  <text x="276" y="580" class="s">c8g.large · Graviton4 (Neoverse-V2) · AMI "Cloud Optimized OpenCV 3.1" (OpenCV 5.0 + KleidiCV)</text>
+  <rect x="280" y="596" width="250" height="110" rx="8" class="box"/>
+  <text x="292" y="620" class="t">/opt/cool venv (COOL)</text>
+  <text x="292" y="640" class="s">same bench_cool.py</text>
+  <text x="292" y="656" class="s">20 micro-ops + full agent</text>
+  <text x="292" y="672" class="s">on 260 photos x 3 rounds</text>
+  <rect x="550" y="596" width="250" height="110" rx="8" class="box"/>
+  <text x="562" y="620" class="t">/opt/stock venv (baseline)</text>
+  <text x="562" y="640" class="s">pip opencv-python-headless</text>
+  <text x="562" y="656" class="s">5.0.0.93, same instance</text>
+  <text x="562" y="672" class="s">decision hash must match</text>
+
+  <rect x="850" y="530" width="310" height="200" rx="14" class="box"/>
+  <text x="866" y="556" class="t">Data &amp; evaluation</text>
+  <text x="866" y="580" class="s">Amazon Berkeley Objects (CC BY 4.0),</text>
+  <text x="866" y="598" class="s">AWS Open Data public S3 bucket</text>
+  <text x="866" y="622" class="s">252 clean catalog photos x 13 controlled</text>
+  <text x="866" y="640" class="s">defects = 3276 labelled images</text>
+  <text x="866" y="658" class="s">dev 1508 (tuning) / test 1768 (held out)</text>
+  <text x="866" y="682" class="s">+ 106 real catalog photos that fail the</text>
+  <text x="866" y="700" class="s">base filter (failure analysis)</text>
+  <path d="M848,620 L822,620" class="l"/>
+</svg>
