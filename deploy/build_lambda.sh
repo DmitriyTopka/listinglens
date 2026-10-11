@@ -16,6 +16,7 @@ mv pkg/cv2 pkg/opencv_python_headless.libs pkg/opencv_python_headless-*.dist-inf
 (cd L2 && zip -q -9 -r ../layer-opencv.zip python)
 cp "$HERE"/listinglens/*.py fn/listinglens/
 cp "$HERE"/app/lambda_function.py "$HERE"/app/index.html fn/app/
+cp -r "$HERE"/app/samples fn/app/
 echo 'from app.lambda_function import handler  # noqa: F401' > fn/lambda_function.py
 (cd fn && zip -q -9 -r ../function.zip .)
 ls -la "$OUT"/*.zip

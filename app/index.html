@@ -41,6 +41,10 @@ td{padding:2px 10px 2px 0;border-bottom:1px solid var(--line)}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .chosen{font-size:14px;color:var(--muted)}
 footer{color:var(--muted);font-size:13px;margin-top:32px}
+.samples{margin-top:14px}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.thumbs button{padding:0;width:84px;height:84px;overflow:hidden;background:#fff}
+.thumbs img{width:100%;height:100%;object-fit:cover;display:block}
 @media (max-width:640px){.imgs{grid-template-columns:1fr}}
 </style>
 </head>
@@ -54,6 +58,11 @@ footer{color:var(--muted);font-size:13px;margin-top:32px}
     <strong>Choose photos or drop them here</strong>
     <span>JPEG, PNG or WebP. Photos are resized in your browser to 2000&nbsp;px and are not stored on the server.</span>
   </label>
+
+  <div class="samples" id="samples" hidden>
+    <span class="stats">No photos at hand? Try a sample (catalog photos from Amazon Berkeley Objects, CC BY 4.0, with controlled defects):</span>
+    <div class="thumbs" id="thumbs"></div>
+  </div>
 
   <div class="bar">
     <button id="export" type="button" disabled>Download decisions (JSON)</button>
@@ -147,6 +156,24 @@ async function handle(files){
     }
   }
 }
+
+fetch("samples/list.json").then(r => r.ok ? r.json() : []).then(list => {
+  if (!list.length) return;
+  const box = document.getElementById("thumbs");
+  list.forEach(name => {
+    const b = document.createElement("button");
+    b.type = "button";
+    const label = name.replace(/^\d+_/, "").replace(/\.jpg$/, "").replace(/_/g, " ");
+    b.title = "Try: " + label; b.setAttribute("aria-label", "Try sample photo: " + label);
+    b.innerHTML = `<img src="samples/${name}" alt="">`;
+    b.onclick = async () => {
+      const blob = await (await fetch("samples/" + name)).blob();
+      handle([new File([blob], name, {type: "image/jpeg"})]);
+    };
+    box.appendChild(b);
+  });
+  document.getElementById("samples").hidden = false;
+}).catch(() => {});
 
 document.getElementById("file").addEventListener("change", e => handle([...e.target.files]));
 ["dragenter","dragover"].forEach(t => drop.addEventListener(t, e => {e.preventDefault(); drop.classList.add("over");}));

@@ -29,6 +29,7 @@ MAX_SIDE = 4000
 DUP_HAMMING = 6
 HERE = os.path.dirname(__file__)
 PAGE = open(os.path.join(HERE, "index.html"), encoding="utf-8").read()
+SAMPLES = os.path.join(HERE, "samples")
 
 
 def _planner():
@@ -88,6 +89,18 @@ def handler(event, context=None):
     path = event.get("rawPath", "/")
     if method == "GET" and path in ("/", "/index.html"):
         return _resp(200, PAGE, "text/html; charset=utf-8")
+    if method == "GET" and path.startswith("/samples/"):
+        name = os.path.basename(path)
+        if name == "list.json":
+            files = sorted(f for f in os.listdir(SAMPLES) if f.endswith(".jpg"))
+            return _resp(200, files)
+        f = os.path.join(SAMPLES, name)
+        if not (name.endswith(".jpg") and os.path.isfile(f)):
+            return _resp(404, {"error": "not found"})
+        r = _resp(200, base64.b64encode(open(f, "rb").read()).decode(), "image/jpeg")
+        r["isBase64Encoded"] = True
+        r["headers"]["Cache-Control"] = "public, max-age=86400"
+        return r
     if method == "GET" and path == "/health":
         return _resp(200, {"ok": True, "opencv": cv2.__version__, "arch": os.uname().machine})
     if method != "POST" or path != "/api/check":

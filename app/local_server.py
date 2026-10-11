@@ -15,7 +15,7 @@ class H(BaseHTTPRequestHandler):
         ev = {"rawPath": self.path.split("?")[0], "requestContext": {"http": {"method": method}},
               "body": base64.b64encode(body).decode(), "isBase64Encoded": True}
         r = handler(ev)
-        out = r["body"].encode()
+        out = base64.b64decode(r["body"]) if r.get("isBase64Encoded") else r["body"].encode()
         self.send_response(r["statusCode"])
         for k, v in r["headers"].items():
             self.send_header(k, v)
