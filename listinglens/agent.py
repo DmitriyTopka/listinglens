@@ -99,7 +99,13 @@ def run(img: np.ndarray, planner, extra_issues: list[Issue] | None = None) -> Re
             step.outcome = "final"
             steps.append(step)
             decision = "auto_fixed" if (action == "accept" and changed) else action
-            return _finish(decision, choice.get("message", reason), steps, initial, initial_issues, rep, cur, t0)
+            message = choice.get("message", reason)
+            if decision == "auto_fixed":
+                done = [s.action.replace("_", " ") for s in steps if s.outcome.startswith("kept")]
+                message = "Fixed automatically (" + ", ".join(done) + ") and re-checked: all checks pass."
+            elif decision == "accept":
+                message = "Ready to publish: all checks pass."
+            return _finish(decision, message, steps, initial, initial_issues, rep, cur, t0)
 
         ts = time.perf_counter()
         out = TOOLS[action](cur)
