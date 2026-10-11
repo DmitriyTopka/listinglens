@@ -8,6 +8,7 @@ Launch (CloudShell, after subscribing to COOL on AWS Marketplace):
     --metadata-options HttpTokens=required
   aws ec2 get-console-output --instance-id <id> --latest --output text | grep LL
 """
+import ast
 import glob
 import gzip
 import os
@@ -20,8 +21,14 @@ files = sorted(glob.glob("listinglens/*.py")) + ["eval/make_dataset.py", "bench/
 parts = []
 for f in files:
     body = open(f).read()
-    if f.endswith(".py"):  # drop comment-only and blank lines to stay under the 16 KB user-data limit
-        body = "\n".join(l for l in body.splitlines() if l.strip() and not l.strip().startswith("#")) + "\n"
+    if f.endswith(".py"):  # minify (drop comments and docstrings) to stay under the 16 KB user-data limit
+        tree = ast.parse(body)
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Module, ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef)) and node.body \
+                    and isinstance(node.body[0], ast.Expr) and isinstance(getattr(node.body[0], "value", None), ast.Constant) \
+                    and isinstance(node.body[0].value.value, str):
+                node.body = node.body[1:] or [ast.Pass()]
+        body = ast.unparse(tree) + "\n"
     if not body.endswith("\n"):
         body += "\n"
     parts.append(f"mkdir -p $(dirname {f}) && cat > {f} <<'LLEOF'\n{body}LLEOF\n")
