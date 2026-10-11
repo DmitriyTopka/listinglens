@@ -66,8 +66,12 @@ class RulePlanner:
             return {"action": "reshoot", "reason": "automatic fixes failed: " + ",".join(i.code for i in issues),
                     "message": " ".join(STUCK[i.code][1] for i in reshoot), "planner": self.name}
         left = [f"{i.code} ({i.evidence})" for i in issues]
+        msg = "Automatic fixes did not work, please review."
+        if any(i.code == "busy_background" for i in issues):
+            msg = ("The background could not be separated safely. If this is a lifestyle or in-use photo it can "
+                   "work as a secondary image; for the main image shoot the product alone on a plain light background.")
         return {"action": "human", "reason": "automatic fixes failed: " + "; ".join(left),
-                "message": "Automatic fixes did not work, please review.", "planner": self.name}
+                "message": msg, "planner": self.name}
 
 
 SYSTEM = """You are the decision step of a product-photo QA agent for an online store.

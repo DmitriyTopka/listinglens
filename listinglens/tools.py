@@ -14,6 +14,7 @@ OUT_SIDE = 1600
 MIN_SIDE = 1000
 MAX_UPSCALE = 2.0
 GRABCUT_SIDE = 640
+SCENE_RING = 0.15
 
 
 def _full_res_mask(img: np.ndarray):
@@ -103,6 +104,14 @@ def whiten_background(img: np.ndarray, iters: int = 3) -> tuple[np.ndarray, floa
     bgd, fgd = np.zeros((1, 65), np.float64), np.zeros((1, 65), np.float64)
     cv2.grabCut(work, gc, None, bgd, fgd, iters, cv2.GC_INIT_WITH_MASK)
     fg = np.where((gc == cv2.GC_FGD) | (gc == cv2.GC_PR_FGD), 255, 0).astype(np.uint8)
+    # Scene check: the border strip is forced to background, so look just inside it. If the foreground
+    # runs along that ring, the "product" continues past the frame (room scene, in-use shot) and cutting it
+    # out would invent an edge. Signal it with agreement -1.
+    h, w = fg.shape
+    b = max(2, int(round(min(h, w) * 0.02)))
+    ring = [fg[b + 1, b:w - b], fg[h - b - 2, b:w - b], fg[b:h - b, b + 1], fg[b:h - b, w - b - 2]]
+    if max(float((r > 0).mean()) for r in ring) > SCENE_RING:
+        return img.copy(), -1.0
     inter = np.logical_and(fg > 0, om.mask > 0).sum()
     union = np.logical_or(fg > 0, om.mask > 0).sum()
     iou = float(inter / union) if union else 0.0

@@ -121,6 +121,8 @@ def run(img: np.ndarray, planner, extra_issues: list[Issue] | None = None) -> Re
         why = verify(action, rep, new_rep)
         if why:
             pass
+        elif gc_iou is not None and gc_iou < 0:
+            why = "product continues past the frame (scene or in-use photo), background not replaced"
         elif gc_iou is not None and gc_iou < 0.80:
             why = f"grabcut disagrees with seed mask (IoU {gc_iou:.2f})"
         elif introduced:
