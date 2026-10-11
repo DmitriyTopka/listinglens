@@ -136,31 +136,34 @@ photos x 13 defect variants = 260 images.
 (`/opt/cool/python_3.12/site-packages/cv2/python-3.12/cv2.cpython-312-aarch64-linux-gnu.so` vs
 `/opt/stock/lib/python3.12/site-packages/cv2/__init__.py`) and the version string.
 
-**Results (median of rounds; speedup = stock / COOL):**
+**Results (final run, median of 3 rounds each; speedup = stock / COOL; full table in
+[bench/RESULTS.md](../bench/RESULTS.md)):**
 
 | operation | COOL ms | stock ms | speedup |
 |---|---:|---:|---:|
-| blur (box 1x9) | 2.694 | 7.851 | **2.91x** |
-| threshold (Otsu) | 0.859 | 1.652 | **1.92x** |
-| CLAHE apply | 4.750 | 6.653 | **1.40x** |
-| findContours | 0.158 | 0.168 | 1.06x |
-| grabCut 1024 px, 2 it | 727.2 | 763.5 | 1.05x |
-| imencode JPEG | 5.911 | 6.060 | 1.03x |
-| fastNlMeansDenoisingColored 1024 px | 763.4 | 777.6 | 1.02x |
-| resize INTER_AREA 1600 to 1024 | 5.994 | 6.024 | 1.01x |
-| cvtColor BGR2LAB / Laplacian / filter2D / morphology / warpAffine | | | 0.99-1.00x |
-| GaussianBlur sigma 1.6 | 10.348 | 9.924 | 0.96x |
-| adaptiveThreshold (Gaussian) | 11.564 | 8.940 | **0.77x** |
-| **full agent, mean per image** | **570.4** | **586.3** | **1.028x** |
-| full agent, throughput (img/s) | 1.753 | 1.706 | 1.028x |
+| blur (box 1x9) | 2.744 | 7.862 | **2.87x** |
+| threshold (Otsu) | 0.856 | 1.658 | **1.94x** |
+| CLAHE apply | 4.755 | 6.663 | **1.40x** |
+| findContours | 0.158 | 0.174 | 1.10x |
+| grabCut 1024 px, 2 it | 720.8 | 761.1 | 1.06x |
+| fastNlMeansDenoisingColored 1024 px | 764.3 | 778.3 | 1.02x |
+| imencode JPEG | 5.975 | 6.109 | 1.02x |
+| resize, cvtColor, Laplacian, filter2D, morphology, warpAffine | | | 0.97-1.02x |
+| GaussianBlur sigma 1.6 | 10.547 | 9.942 | 0.94x |
+| Canny | 2.296 | 2.075 | 0.90x |
+| adaptiveThreshold (Gaussian) | 11.586 | 8.973 | **0.77x** |
+| **full agent, mean per image (260 images)** | **344.5** | **356.1** | **1.034x** |
+| full agent, p95 | 1226.2 | 1328.9 | 1.084x |
+| full agent, throughput (img/s) | 2.903 | 2.808 | 1.034x |
 
-Decision hash `b7212930db064904` is identical in every COOL and stock run: COOL changes speed, not answers.
+Decision hash `f6c1d93bb5b62db5` is identical in all six runs: COOL changes speed, not answers. An earlier
+run on a previous commit (GrabCut at 1024 px) showed the same pattern (1.028x end to end).
 
 **Reading the numbers honestly.** COOL gives 1.4-2.9x on the box filter, Otsu threshold and CLAHE that the
 perception stage uses, but ListingLens spends most of its time in GrabCut and non-local-means denoising,
-where COOL is 2-5 % faster, so the end-to-end gain is 2.8 %. With the COOL software fee ($0.01/h on top of
-$0.0798/h for c8g.large) the cost per 1000 photos on one c8g.large is $0.0142 with COOL vs $0.0130 with the
-stock wheel at these speeds. COOL would pay off for workloads dominated by the operations it accelerates
+where COOL is 2-6 % faster, so the end-to-end gain is 3.4 % on the mean and 8.4 % on the p95 tail (the
+GrabCut-heavy photos). With the COOL software fee ($0.01/h on top of $0.0798/h for c8g.large) the cost per
+1000 photos on one c8g.large is $0.0086 with COOL vs $0.0079 with the stock wheel at these speeds. COOL would pay off for workloads dominated by the operations it accelerates
 (thresholding, box filtering, CLAHE), which is what a perception-only pre-filter in front of the agent
 looks like. One regression (adaptiveThreshold 0.77x) is worth reporting upstream.
 
@@ -186,14 +189,14 @@ because it raises the dev score.
 
 | split | images | correct | accuracy |
 |---|---:|---:|---:|
-| dev | 1508 | 1374 | 91.1 % |
+| dev | 1508 | 1363 | 90.4 % |
 | test (held out) | 1768 | TBD | TBD |
 
-Per variant on dev: blur, low resolution, cluttered background, small/off-centre 100 %; colour cast and
-dark 98 %; clean 96 %; motion blur 96 %; grey background 89 %; cut-off 90 %; noisy 86 %; soft focus 86 %;
-**overexposed 46 %**.
+Per variant on dev: strong blur, low resolution, cluttered background 100 %; colour cast and dark 98 %;
+clean 96 %; motion blur 95 %; small/off-centre 92 %; cut-off 90 %; noisy 89 %; grey background 88 %;
+soft focus 84 %; **overexposed 45 %**.
 
-Agent behaviour on dev: in 345 of 1508 photos at least one action was reverted because the follow-up
+Agent behaviour on dev: in 337 of 1508 photos at least one action was reverted because the follow-up
 measurement showed it did not help; the next step then changed (most often `sharpen -> reshoot`,
 `whiten_background -> human`, `exposure -> whiten_background -> accept`).
 
@@ -206,11 +209,17 @@ measurement showed it did not help; the next step then changed (most often `shar
   catches 46 % of synthetic overexposure, and on the first held-out test product (a white item) it flags
   "blown highlights" on every variant. This is the main open weakness.
 - **Mild blur on smooth products** is sometimes accepted (16 of 116 soft-focus images on dev).
-- **Noise:** 16 of 116 noisy photos end in "reshoot" because denoising raised the blur index; the result is
+- **Noise:** 13 of 116 noisy photos end in "reshoot" because denoising raised the blur index; the result is
   safe but conservative.
+- **Real professional catalog photos (106 that failed the strict filter, no labels):** the first version
+  sent 38 to reshoot, mostly false alarms: fabric and printed packaging read as sensor noise, and white
+  products on white read as blown highlights. Measuring noise on flat regions only and turning "blown
+  highlights" into a human decision brought this to 18 reshoot / 52 human / 23 accept / 13 auto-fixed
+  (dev accuracy moved from 91.1 % to 90.4 %). The remaining reshoots are mostly tight crops that touch the
+  frame, which some marketplaces accept: the threshold is a policy choice.
 
 ### 6.4 Latency
-Mean 0.85 s per image on an Apple M2 Pro, 0.57 s on one Graviton4 c8g.large (COOL), median 0.17 s; the
+Mean 0.82 s per image on an Apple M2 Pro, 0.34 s on one Graviton4 c8g.large with COOL (0.36 s stock), median 0.17 s; the
 slow tail is GrabCut and denoising. On Lambda arm64 the round trip is 1.0-1.6 s for typical photos.
 
 ## 7. Limitations
