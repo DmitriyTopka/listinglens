@@ -7,13 +7,15 @@
 #   Lambda 1M requests + 400k GB-s / month, CloudWatch 10 alarms + 5 GB logs, SNS 1M publishes.
 # A kill switch caps abuse: if the function is invoked more than $HOURLY_CAP times in an hour,
 # a CloudWatch alarm -> SNS -> tiny "killswitch" Lambda sets its concurrency to 0 (service off).
+# Self-healing: once the next hour is quiet the alarm returns to OK, the same topic fires again and the
+# killswitch Lambda removes the concurrency limit, so the demo cannot stay dead through a judging window.
 set -euo pipefail
 
 REGION=${AWS_REGION:-us-east-1}
 FN=listinglens
 ROLE=listinglens-lambda-role
 KROLE=listinglens-killswitch-role
-HOURLY_CAP=${HOURLY_CAP:-300}
+HOURLY_CAP=${HOURLY_CAP:-1000}   # a judge opening the page costs ~8 invocations (page, sample list, thumbnails)
 ALERT_EMAIL=${ALERT_EMAIL:-}
 ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
 export AWS_DEFAULT_REGION=$REGION
@@ -32,7 +34,7 @@ echo "== roles"
 ensure_role "$ROLE"
 ensure_role "$KROLE"
 aws iam put-role-policy --role-name "$KROLE" --policy-name stop-listinglens --policy-document \
-  "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"lambda:PutFunctionConcurrency\",\"Resource\":\"arn:aws:lambda:$REGION:$ACCOUNT:function:$FN\"}]}"
+  "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"lambda:PutFunctionConcurrency\",\"lambda:DeleteFunctionConcurrency\"],\"Resource\":\"arn:aws:lambda:$REGION:$ACCOUNT:function:$FN\"}]}"
 
 echo "== layers (arm64, python3.12)"
 L_NP=$(aws lambda publish-layer-version --layer-name listinglens-numpy --zip-file fileb://layer-numpy.zip \
@@ -71,16 +73,29 @@ URL=$(aws lambda get-function-url-config --function-name "$FN" --query FunctionU
 
 echo "== kill switch (> $HOURLY_CAP invocations/hour -> concurrency 0)"
 cat > /tmp/killswitch.py <<PY
+import json
 import boto3
 def handler(event, context):
-    boto3.client("lambda").put_function_concurrency(FunctionName="$FN", ReservedConcurrentExecutions=0)
-    print("listinglens disabled by kill switch")
+    lam = boto3.client("lambda")
+    for rec in event.get("Records", []):
+        state = json.loads(rec["Sns"]["Message"]).get("NewStateValue")
+        if state == "ALARM":
+            lam.put_function_concurrency(FunctionName="$FN", ReservedConcurrentExecutions=0)
+            print("listinglens disabled by kill switch")
+        elif state == "OK":
+            try:
+                lam.delete_function_concurrency(FunctionName="$FN")
+                print("listinglens re-enabled after a quiet hour")
+            except Exception as e:  # nothing to remove
+                print("re-enable skipped:", type(e).__name__)
 PY
 (cd /tmp && rm -f killswitch.zip && zip -q killswitch.zip killswitch.py)
 if ! aws lambda get-function --function-name listinglens-killswitch >/dev/null 2>&1; then
   aws lambda create-function --function-name listinglens-killswitch --runtime python3.12 --architectures arm64 \
     --handler killswitch.handler --role "arn:aws:iam::$ACCOUNT:role/$KROLE" --zip-file fileb:///tmp/killswitch.zip \
     --timeout 10 --memory-size 128 >/dev/null
+else
+  aws lambda update-function-code --function-name listinglens-killswitch --zip-file fileb:///tmp/killswitch.zip >/dev/null
 fi
 TOPIC=$(aws sns create-topic --name listinglens-killswitch --query TopicArn --output text)
 KARN="arn:aws:lambda:$REGION:$ACCOUNT:function:listinglens-killswitch"
@@ -94,7 +109,9 @@ fi
 aws cloudwatch put-metric-alarm --alarm-name listinglens-hourly-cap \
   --namespace AWS/Lambda --metric-name Invocations --dimensions Name=FunctionName,Value=$FN \
   --statistic Sum --period 3600 --evaluation-periods 1 --threshold "$HOURLY_CAP" \
-  --comparison-operator GreaterThanThreshold --treat-missing-data notBreaching --alarm-actions "$TOPIC"
+  --comparison-operator GreaterThanThreshold --treat-missing-data notBreaching \
+  --alarm-actions "$TOPIC" --ok-actions "$TOPIC"
+# manual re-enable at any time: aws lambda delete-function-concurrency --function-name listinglens
 
 echo "== smoke test"
 curl -s "${URL}health"; echo

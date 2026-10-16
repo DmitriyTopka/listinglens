@@ -54,9 +54,9 @@ footer{color:var(--muted);font-size:13px;margin-top:32px}
   <p class="lead">Drop the photos for one product listing. An OpenCV&nbsp;5 agent measures each photo, fixes what it can do safely (framing, white balance, exposure, background, noise), checks its own fix, and tells you plainly when a photo needs a reshoot or a human decision.</p>
 
   <label class="drop" id="drop">
-    <input id="file" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+    <input id="file" type="file" accept="image/*" multiple aria-label="Choose product photos or take one with the camera">
     <strong>Choose photos or drop them here</strong>
-    <span>JPEG, PNG or WebP. Photos are resized in your browser to 2000&nbsp;px and are not stored on the server.</span>
+    <span>JPEG, PNG or WebP; on a phone you can take a photo. Photos are resized in your browser to 2000&nbsp;px and are not stored on the server. The first check after a quiet period can take a few extra seconds (serverless cold start).</span>
   </label>
 
   <div class="samples" id="samples" hidden>
@@ -71,6 +71,7 @@ footer{color:var(--muted);font-size:13px;margin-top:32px}
 
   <section id="results" aria-live="polite"></section>
 
+  <p class="stats">For judges: <a href="report.pdf">technical report (PDF)</a> · <a href="trace/example.json">example agent trace</a> · <a href="eval/summary.json">evaluation summary</a> · <a href="build-info">OpenCV build info</a> · <a href="source.zip">source code</a></p>
   <footer>Every decision comes with its evidence: the OpenCV measurements, each tool the agent tried, and whether it kept or reverted the result. Automatic edits never change what the product looks like beyond neutralising the measured colour cast; larger changes go to a person.</footer>
 </main>
 
@@ -165,7 +166,7 @@ fetch("samples/list.json").then(r => r.ok ? r.json() : []).then(list => {
     b.type = "button";
     const label = name.replace(/^\d+_/, "").replace(/\.jpg$/, "").replace(/_/g, " ");
     b.title = "Try: " + label; b.setAttribute("aria-label", "Try sample photo: " + label);
-    b.innerHTML = `<img src="samples/${name}" alt="">`;
+    b.innerHTML = `<img src="samples/${name}" alt="Sample: ${label}">`;
     b.onclick = async () => {
       const blob = await (await fetch("samples/" + name)).blob();
       handle([new File([blob], name, {type: "image/jpeg"})]);

@@ -1,0 +1,105 @@
+{
+ "note": "ListingLens evaluation summary. Source of truth: eval/results/ in the source archive.",
+ "synthetic_test": {
+  "images": 1768,
+  "correct": 1584,
+  "accuracy": 0.8959,
+  "per_variant": {
+   "blur_strong": {
+    "correct": 136,
+    "n": 136
+   },
+   "busy_background": {
+    "correct": 136,
+    "n": 136
+   },
+   "clean": {
+    "correct": 132,
+    "n": 136
+   },
+   "colour_cast": {
+    "correct": 132,
+    "n": 136
+   },
+   "cut_off": {
+    "correct": 127,
+    "n": 136
+   },
+   "dark": {
+    "correct": 136,
+    "n": 136
+   },
+   "grey_background": {
+    "correct": 127,
+    "n": 136
+   },
+   "low_resolution": {
+    "correct": 136,
+    "n": 136
+   },
+   "motion_blur": {
+    "correct": 115,
+    "n": 136
+   },
+   "noisy": {
+    "correct": 120,
+    "n": 136
+   },
+   "overexposed": {
+    "correct": 45,
+    "n": 136
+   },
+   "small_offcentre": {
+    "correct": 132,
+    "n": 136
+   },
+   "soft_focus": {
+    "correct": 110,
+    "n": 136
+   }
+  }
+ },
+ "synthetic_dev": {
+  "images": 1508,
+  "correct": 1363,
+  "accuracy": 0.9038
+ },
+ "ablation_test": {
+  "agent": {
+   "lenient_acc": 0.8959,
+   "strict_acc": 0.875,
+   "photos_with_rollback": 371,
+   "correct_on_rollback_photos": 351
+  },
+  "open_loop": {
+   "lenient_acc": 0.8524,
+   "strict_acc": 0.845,
+   "claimed_fixed": 1032,
+   "fixed_but_still_failing": 255,
+   "correct_on_same_photos": 274
+  }
+ },
+ "real_catalog_106": {
+  "labels": "hand-labelled against main-image rules: 73 ok, 33 problem",
+  "agent": {
+   "ok->accept": 18,
+   "ok->auto_fixed": 12,
+   "ok->human": 31,
+   "ok->reshoot": 12,
+   "problem->accept": 5,
+   "problem->auto_fixed": 1,
+   "problem->human": 21,
+   "problem->reshoot": 6
+  },
+  "open_loop": {
+   "ok->accept": 18,
+   "ok->auto_fixed": 26,
+   "ok->human": 17,
+   "ok->reshoot": 12,
+   "problem->accept": 5,
+   "problem->auto_fixed": 17,
+   "problem->human": 5,
+   "problem->reshoot": 6
+  }
+ }
+}

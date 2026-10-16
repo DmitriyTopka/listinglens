@@ -106,6 +106,25 @@ def handler(event, context=None):
         r["isBase64Encoded"] = True
         r["headers"]["Content-Disposition"] = 'attachment; filename="listinglens_source.zip"'
         return r
+    if method == "GET" and path == "/build-info":
+        info = cv2.getBuildInformation()
+        keep = [l.strip() for l in info.splitlines()
+                if any(k in l for k in ("General configuration", "Version control", "Platform", "Host:", "CPU/HW features",
+                                        "Baseline", "Dispatched", "Parallel framework", "KleidiCV", "Python 3",
+                                        "Interpreter", "numpy", "C++ Compiler"))]
+        return _resp(200, {"opencv": cv2.__version__, "arch": os.uname().machine, "kernel": os.uname().release,
+                           "python": sys.version.split()[0], "numpy": np.__version__,
+                           "memory_mb": os.environ.get("AWS_LAMBDA_FUNCTION_MEMORY_SIZE"),
+                           "function_version": os.environ.get("AWS_LAMBDA_FUNCTION_VERSION"),
+                           "opencv_build_summary": keep})
+    for route, fname, ctype in (("/report.pdf", "REPORT.pdf", "application/pdf"),
+                                ("/trace/example.json", "example_trace.json", "application/json"),
+                                ("/eval/summary.json", "eval_summary.json", "application/json")):
+        f = os.path.join(HERE, "judge", fname)
+        if method == "GET" and path == route and os.path.isfile(f):
+            r = _resp(200, base64.b64encode(open(f, "rb").read()).decode(), ctype)
+            r["isBase64Encoded"] = True
+            return r
     if method == "GET" and path == "/health":
         return _resp(200, {"ok": True, "opencv": cv2.__version__, "arch": os.uname().machine})
     if method != "POST" or path != "/api/check":

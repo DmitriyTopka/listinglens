@@ -4,3 +4,4 @@ build/
 eval/results/
 *.zip
 app/source.zip
+app/judge/

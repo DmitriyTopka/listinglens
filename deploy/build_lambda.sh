@@ -18,6 +18,10 @@ cp "$HERE"/listinglens/*.py fn/listinglens/
 cp "$HERE"/app/lambda_function.py "$HERE"/app/index.html fn/app/
 cp -r "$HERE"/app/samples fn/app/
 [ -f "$HERE"/app/source.zip ] && cp "$HERE"/app/source.zip fn/app/  # judge-accessible source archive, if present
+mkdir -p fn/app/judge  # files a judge can open from the live endpoint
+cp "$HERE"/docs/REPORT.pdf fn/app/judge/REPORT.pdf
+cp "$HERE"/docs/example_trace.json fn/app/judge/example_trace.json
+[ -f "$HERE"/docs/eval_summary.json ] && cp "$HERE"/docs/eval_summary.json fn/app/judge/eval_summary.json
 echo 'from app.lambda_function import handler  # noqa: F401' > fn/lambda_function.py
 (cd fn && zip -q -9 -r ../function.zip .)
 ls -la "$OUT"/*.zip
