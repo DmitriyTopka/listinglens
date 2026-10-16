@@ -9,6 +9,8 @@
 # a CloudWatch alarm -> SNS -> tiny "killswitch" Lambda sets its concurrency to 0 (service off).
 # Self-healing: once the next hour is quiet the alarm returns to OK, the same topic fires again and the
 # killswitch Lambda removes the concurrency limit, so the demo cannot stay dead through a judging window.
+# Latch: after 3 trips in one UTC day it stays off until a person re-enables it (counter in SSM Parameter Store);
+# every ALARM/OK transition is also emailed to the owner.
 set -euo pipefail
 
 REGION=${AWS_REGION:-us-east-1}
@@ -34,7 +36,7 @@ echo "== roles"
 ensure_role "$ROLE"
 ensure_role "$KROLE"
 aws iam put-role-policy --role-name "$KROLE" --policy-name stop-listinglens --policy-document \
-  "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"lambda:PutFunctionConcurrency\",\"lambda:DeleteFunctionConcurrency\"],\"Resource\":\"arn:aws:lambda:$REGION:$ACCOUNT:function:$FN\"}]}"
+  "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"lambda:PutFunctionConcurrency\",\"lambda:DeleteFunctionConcurrency\"],\"Resource\":\"arn:aws:lambda:$REGION:$ACCOUNT:function:$FN\"},{\"Effect\":\"Allow\",\"Action\":[\"ssm:GetParameter\",\"ssm:PutParameter\"],\"Resource\":\"arn:aws:ssm:$REGION:$ACCOUNT:parameter/listinglens/killswitch\"}]}"
 
 echo "== layers (arm64, python3.12)"
 L_NP=$(aws lambda publish-layer-version --layer-name listinglens-numpy --zip-file fileb://layer-numpy.zip \
@@ -73,16 +75,32 @@ URL=$(aws lambda get-function-url-config --function-name "$FN" --query FunctionU
 
 echo "== kill switch (> $HOURLY_CAP invocations/hour -> concurrency 0)"
 cat > /tmp/killswitch.py <<PY
+import datetime
 import json
 import boto3
+MAX_TRIPS_PER_DAY = 3   # after this many trips in one UTC day the switch stays latched until a person re-enables
+PARAM = "/listinglens/killswitch"
+def _trips(ssm):
+    today = datetime.date.today().isoformat()
+    try:
+        day, n = ssm.get_parameter(Name=PARAM)["Parameter"]["Value"].split(":")
+        return today, (int(n) if day == today else 0)
+    except Exception:
+        return today, 0
 def handler(event, context):
-    lam = boto3.client("lambda")
+    lam, ssm = boto3.client("lambda"), boto3.client("ssm")
     for rec in event.get("Records", []):
         state = json.loads(rec["Sns"]["Message"]).get("NewStateValue")
         if state == "ALARM":
             lam.put_function_concurrency(FunctionName="$FN", ReservedConcurrentExecutions=0)
-            print("listinglens disabled by kill switch")
+            today, n = _trips(ssm)
+            ssm.put_parameter(Name=PARAM, Value=f"{today}:{n + 1}", Type="String", Overwrite=True)
+            print(f"listinglens disabled by kill switch (trip {n + 1} today)")
         elif state == "OK":
+            today, n = _trips(ssm)
+            if n >= MAX_TRIPS_PER_DAY:
+                print(f"latched: {n} trips today, staying off until manual re-enable")
+                continue
             try:
                 lam.delete_function_concurrency(FunctionName="$FN")
                 print("listinglens re-enabled after a quiet hour")
