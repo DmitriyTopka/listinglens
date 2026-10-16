@@ -113,6 +113,13 @@ def main():
         out[m]["strict_acc"] = round(c["strict"] / n, 4)
     os.makedirs(os.path.join(ROOT, "eval/results"), exist_ok=True)
     json.dump(out, open(os.path.join(ROOT, f"eval/results/ablation_{a.split}.json"), "w"), indent=1)
+    # per-image decisions, so paired tests (McNemar) can be computed from the published files
+    with open(os.path.join(ROOT, f"eval/results/ablation_{a.split}_per_image.csv"), "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["path", "variant", "expected", "agent", "open_loop", "false_fix", "reverted"])
+        for r, x in zip(rows, res):
+            w.writerow([r["path"], r["variant"], r["expected"], x["agent"], x["open_loop"],
+                        int(bool(x["false_fix"])), int(x["reverted"])])
     print(json.dumps(out, indent=1))
 
 
