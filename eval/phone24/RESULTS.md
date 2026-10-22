@@ -42,3 +42,8 @@ sends good shots to a person or to a reshoot.
 We did not retune thresholds on these 24 photos and re-run: that would turn the test set into a tuning
 set. The deployed agent stays as submitted. A fix (separate a smooth illumination gradient from
 texture before measuring background spread) would need a fresh, unseen set of phone photos to verify.
+
+Diagnostic, same scenes, higher resolution, seen before (not part of the result above): the author re-sent
+6 of the white-sheet photos (P17, P19, P20, P21, P23, P24) at 1512x2016. The resolution issue disappears;
+all 6 still go to a person for one reason only, busy background from the window light (border spread
+13.6-20.1 vs 9.0, clutter edges 0.000-0.0004), after the agent's background fix is rolled back by the scene guard.
