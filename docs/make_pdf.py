@@ -13,7 +13,7 @@ body{{font:11pt/1.45 -apple-system,Helvetica,Arial,sans-serif;max-width:780px;ma
 h1{{font-size:20pt}} h2{{font-size:14pt;margin-top:22px;border-bottom:1px solid #ddd}} h3{{font-size:12pt}}
 table{{border-collapse:collapse;font-size:9.5pt;margin:8px 0}} td,th{{border:1px solid #ccc;padding:3px 6px}}
 code,pre{{font-size:9pt;background:#f4f4f4}} pre{{padding:8px;overflow-wrap:anywhere;white-space:pre-wrap}}
-svg{{width:100%;height:auto}}
+svg{{width:100%;height:auto}} img{{max-width:100%}}
 </style></head><body>{body}<h2>Architecture diagram</h2>{arch}</body></html>"""
 out = HERE / "REPORT.html"
 out.write_text(html)

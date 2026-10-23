@@ -14,6 +14,8 @@ pipeline stops 11). Runs in about a second per photo on AWS Lambda (Graviton) in
 - Results: 89.6 % correct decisions on 1768 held-out test photos; COOL on Graviton4 in [bench/RESULTS.md](bench/RESULTS.md)
 - Architecture: [docs/architecture.svg](docs/architecture.svg)
 - Technical report: [docs/REPORT.md](docs/REPORT.md)
+- Statistics (McNemar, Wilson CIs): [eval/STATS.md](eval/STATS.md) · decision boundaries: [docs/boundary_map.png](docs/boundary_map.png)
+- Real phone photos, one pre-registered run, published as is: [eval/phone24/RESULTS.md](eval/phone24/RESULTS.md)
 
 ## Why
 
@@ -77,8 +79,8 @@ cd ~/build && ALERT_EMAIL=you@example.com bash ~/listinglens/deploy/deploy_lambd
 ```
 
 This creates: Lambda `listinglens` (arm64, Python 3.12, 2048 MB), a public Function URL, log retention
-14 days, and a kill switch (CloudWatch alarm at >300 invocations/hour -> SNS -> `listinglens-killswitch`
-sets reserved concurrency to 0). Re-enable with `aws lambda delete-function-concurrency --function-name listinglens`.
+14 days, and a kill switch (CloudWatch alarm at >1000 invocations/hour -> SNS -> `listinglens-killswitch`
+sets reserved concurrency to 0; it re-enables after a quiet hour and stays off after 3 trips in a UTC day). Re-enable with `aws lambda delete-function-concurrency --function-name listinglens`.
 
 ## COOL benchmark (Graviton4)
 

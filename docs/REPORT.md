@@ -122,7 +122,7 @@ metrics. This is a measurement interaction, not real sharpening, and it is liste
 | Inference + web page | **AWS Lambda, arm64 (Graviton)**, Python 3.12, 2048 MB | layers: OpenCV 5 (36 MB zip) and NumPy (12 MB zip); [verified: `/health` returns `opencv 5.0.0`, `aarch64`] |
 | HTTPS endpoint | Lambda Function URL (auth NONE) | the page and `POST /api/check` on one origin |
 | Observability | CloudWatch Logs, 14-day retention | one JSON line per request: decision, issue codes, steps, latency; no pixels, no personal data |
-| Abuse / cost guard | CloudWatch alarm (>300 invocations/hour) -> SNS -> `listinglens-killswitch` Lambda | sets reserved concurrency to 0, emails the owner |
+| Abuse / cost guard | CloudWatch alarm (>1000 invocations/hour) -> SNS -> `listinglens-killswitch` Lambda | sets reserved concurrency to 0 and emails the owner; re-enables itself after a quiet hour, stays off after 3 trips in one UTC day (counter in SSM Parameter Store). Tested live on 16 Oct: ALARM -> HTTP 429, OK -> HTTP 200 |
 | Budget | AWS Budgets | $1/month alert on actual and forecast |
 | Build & deploy | CloudShell + `deploy/build_lambda.sh`, `deploy/deploy_lambda.sh` | idempotent; no long-lived access keys were created |
 | COOL benchmark | EC2 c8g.large (Graviton4) from the COOL 3.1 AMI | self-terminating user-data, results on the serial console |
@@ -281,9 +281,34 @@ the next step.
 Mean 0.82 s per image on an Apple M2 Pro, 0.34 s on one Graviton4 c8g.large with COOL (0.36 s stock), median 0.17 s; the
 slow tail is GrabCut and denoising. On Lambda arm64 the round trip is 1.0-1.6 s for typical photos.
 
+### 6.7 Statistics, decision boundaries and real phone photos (added 16-22 Oct)
+Full numbers in `eval/STATS.md`, `eval/phone24/RESULTS.md`; nothing in the deployed rules was changed.
+- **Paired tests.** Held-out test: agent 89.6 % (Wilson 95 % CI 88.1-90.9) vs open loop 85.2 % (83.5-86.8);
+  the agent is right where the open loop is wrong on 97 photos, the reverse on 20 (exact McNemar
+  p = 2.6e-13). 106 real catalog photos: 27/33 problems stopped (CI 66-91 %) vs 11/33; 16 vs 0 discordant,
+  p = 3.1e-5. Price: 31/73 good photos go to a person (CI 32-54 %).
+- **Boundary map** (`docs/boundary_map.png`, `eval/boundary_map.py`): 40 clean held-out photos, one defect
+  at a time, 7 strengths. Blur: most pass up to sigma 0.8 px, almost all reshoot from 1.6 px. Darkness and
+  colour cast: auto-fixed from the first visible step. Noise: accepted below sigma 8, then denoised or
+  reshoot. Overexposure: even at full test strength 40 % still pass as accept, the measured blind spot.
+
+![Decision boundaries](boundary_map.png)
+
+- **Real phone photos (24, one pre-registered run).** Protocol and hashes committed before the run
+  (`eval/phone24/PREREGISTRATION.md`); labels by the author's assistant, not an independent person. All 8
+  bad photos stopped (CI 68-100 %), and all 16 good ones too: 0/16 passed (CI 0-19 %). Causes: Telegram had
+  shrunk the files to 960 px (rule: 1,000 px), and in a diagnostic run without that rule the background
+  check read wood grain and window-light falloff on a white sheet as clutter (border spread 13.6-21.9 vs
+  9.0 with almost no edges). Six of the white-sheet scenes re-sent at 1512x2016 confirm it: the resolution
+  rule no longer fires, the light gradient still sends them to a person.
+- **Cost per 1,000 photos** on Lambda: under $0.05 at the x86 list price; about 160,000 photos a month fit
+  in the always-free tier.
+
 ## 7. Limitations
 - Thresholds are hand-set on one catalog source; other photo styles (dark product shots, jewellery on black)
-  need their own calibration.
+  need their own calibration. On real phone photos the background rule is too strict: a smooth light
+  gradient on a plain sheet counts as clutter (section 6.7). Separating illumination from texture is the
+  next fix, and it needs a fresh set of phone photos to verify.
 - The synthetic defects are controlled approximations; real phone blur and real mixed lighting are harder.
 - Background replacement uses GrabCut and refuses scenes; it is not suitable for transparent or very
   thin products (glass, cables), which mostly go to a human.

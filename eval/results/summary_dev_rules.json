@@ -1,0 +1,98 @@
+{
+ "split": "dev",
+ "planner": "rules",
+ "images": 1508,
+ "correct": 1363,
+ "accuracy": 0.9038,
+ "wall_s": 111.0,
+ "mean_ms_per_image": 824.8,
+ "per_variant": {
+  "blur_strong": {
+   "n": 116,
+   "ok": 116,
+   "reshoot": 116
+  },
+  "busy_background": {
+   "n": 116,
+   "ok": 116,
+   "human": 88,
+   "auto_fixed": 28
+  },
+  "clean": {
+   "n": 116,
+   "ok": 111,
+   "accept": 111,
+   "reshoot": 1,
+   "auto_fixed": 2,
+   "human": 2
+  },
+  "colour_cast": {
+   "n": 116,
+   "ok": 114,
+   "auto_fixed": 114,
+   "reshoot": 1,
+   "human": 1
+  },
+  "cut_off": {
+   "n": 116,
+   "ok": 104,
+   "reshoot": 75,
+   "human": 29,
+   "auto_fixed": 12
+  },
+  "dark": {
+   "n": 116,
+   "ok": 114,
+   "auto_fixed": 114,
+   "human": 2
+  },
+  "grey_background": {
+   "n": 116,
+   "ok": 102,
+   "human": 14,
+   "auto_fixed": 102
+  },
+  "low_resolution": {
+   "n": 116,
+   "ok": 116,
+   "reshoot": 116
+  },
+  "motion_blur": {
+   "n": 116,
+   "ok": 110,
+   "reshoot": 110,
+   "accept": 4,
+   "human": 1,
+   "auto_fixed": 1
+  },
+  "noisy": {
+   "n": 116,
+   "ok": 103,
+   "auto_fixed": 103,
+   "reshoot": 13
+  },
+  "overexposed": {
+   "n": 116,
+   "ok": 52,
+   "auto_fixed": 14,
+   "human": 44,
+   "accept": 50,
+   "reshoot": 8
+  },
+  "small_offcentre": {
+   "n": 116,
+   "ok": 107,
+   "auto_fixed": 85,
+   "reshoot": 22,
+   "human": 9
+  },
+  "soft_focus": {
+   "n": 116,
+   "ok": 98,
+   "reshoot": 98,
+   "accept": 16,
+   "human": 2
+  }
+ },
+ "replanned_after_revert": 337
+}

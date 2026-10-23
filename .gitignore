@@ -1,7 +1,13 @@
 __pycache__/
 .pytest_cache/
 build/
-eval/results/
+eval/results/*
+!eval/results/ablation_test.json
+!eval/results/ablation_test_per_image.csv
+!eval/results/boundary_map.json
+!eval/results/real106_labels.csv
+!eval/results/summary_dev_rules.json
+!eval/results/summary_test_rules.json
 *.zip
 app/source.zip
 app/judge/

@@ -1,0 +1,28 @@
+{
+ "split": "test",
+ "images": 1768,
+ "agent": {
+  "lenient": 1584,
+  "strict": 1547,
+  "with_revert": 371,
+  "with_revert_correct": 351,
+  "claimed_fixed": 691,
+  "lenient_acc": 0.8959,
+  "strict_acc": 0.875
+ },
+ "open_loop": {
+  "lenient": 1507,
+  "strict": 1494,
+  "claimed_fixed": 1032,
+  "false_fix": 255,
+  "on_reverted_correct": 274,
+  "lenient_acc": 0.8524,
+  "strict_acc": 0.845
+ },
+ "rules_only": {
+  "lenient": 1507,
+  "strict": 1494,
+  "lenient_acc": 0.8524,
+  "strict_acc": 0.845
+ }
+}

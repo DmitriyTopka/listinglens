@@ -1,0 +1,165 @@
+{
+ "photos": 40,
+ "defects": {
+  "blur (Gaussian sigma, px)": {
+   "0": {
+    "human": 2,
+    "accept": 38
+   },
+   "0.8": {
+    "human": 2,
+    "accept": 31,
+    "reshoot": 6,
+    "auto_fixed": 1
+   },
+   "1.6": {
+    "human": 2,
+    "reshoot": 34,
+    "accept": 3,
+    "auto_fixed": 1
+   },
+   "2.4": {
+    "reshoot": 39,
+    "human": 1
+   },
+   "3.2": {
+    "reshoot": 40
+   },
+   "4.5": {
+    "reshoot": 40
+   },
+   "6.0": {
+    "reshoot": 40
+   }
+  },
+  "darkness (0 = none, 1 = strong)": {
+   "0": {
+    "human": 2,
+    "accept": 38
+   },
+   "0.15": {
+    "auto_fixed": 39,
+    "human": 1
+   },
+   "0.3": {
+    "auto_fixed": 40
+   },
+   "0.45": {
+    "auto_fixed": 40
+   },
+   "0.6": {
+    "auto_fixed": 40
+   },
+   "0.8": {
+    "auto_fixed": 40
+   },
+   "1.0": {
+    "auto_fixed": 40
+   }
+  },
+  "colour cast (LAB b* shift)": {
+   "0": {
+    "human": 2,
+    "accept": 38
+   },
+   "4": {
+    "human": 2,
+    "accept": 38
+   },
+   "8": {
+    "human": 2,
+    "auto_fixed": 38
+   },
+   "12": {
+    "human": 2,
+    "auto_fixed": 38
+   },
+   "16": {
+    "human": 2,
+    "auto_fixed": 38
+   },
+   "20": {
+    "auto_fixed": 39,
+    "human": 1
+   },
+   "26": {
+    "auto_fixed": 40
+   }
+  },
+  "sensor noise (sigma, 8-bit)": {
+   "0": {
+    "human": 2,
+    "accept": 38
+   },
+   "4": {
+    "human": 2,
+    "accept": 38
+   },
+   "8": {
+    "human": 2,
+    "accept": 38
+   },
+   "12": {
+    "reshoot": 8,
+    "auto_fixed": 32
+   },
+   "16": {
+    "auto_fixed": 33,
+    "human": 1,
+    "reshoot": 6
+   },
+   "20": {
+    "auto_fixed": 30,
+    "human": 1,
+    "reshoot": 9
+   },
+   "28": {
+    "auto_fixed": 38,
+    "human": 1,
+    "reshoot": 1
+   }
+  },
+  "overexposure (0 = none, 1 = test variant)": {
+   "0": {
+    "human": 2,
+    "accept": 38
+   },
+   "0.15": {
+    "human": 3,
+    "accept": 32,
+    "auto_fixed": 4,
+    "reshoot": 1
+   },
+   "0.3": {
+    "human": 6,
+    "auto_fixed": 6,
+    "accept": 27,
+    "reshoot": 1
+   },
+   "0.45": {
+    "human": 7,
+    "auto_fixed": 8,
+    "accept": 24,
+    "reshoot": 1
+   },
+   "0.6": {
+    "human": 9,
+    "auto_fixed": 7,
+    "accept": 21,
+    "reshoot": 3
+   },
+   "0.8": {
+    "human": 14,
+    "auto_fixed": 7,
+    "accept": 17,
+    "reshoot": 2
+   },
+   "1.0": {
+    "human": 16,
+    "auto_fixed": 6,
+    "accept": 16,
+    "reshoot": 2
+   }
+  }
+ }
+}
